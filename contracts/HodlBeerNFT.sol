@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
@@ -9,8 +10,11 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
   using Counters for Counters.Counter;
   Counters.Counter private _tokenIds;
 
+  mapping(bytes => bool) public signatureUsed;
+
   uint256 public MAX_TOKENS = 6000;
-  uint256 public CURRENT_PRICE = 0.01 ether;
+  uint256 public CURRENT_PRICE_1 = 0.02 ether;
+  uint256 public CURRENT_PRICE_2 = 0.01 ether;
   string public BASE_URI = "https://hodlbeer.nft.baicom.com/api/card/";
 
   event NewNFTMinted(address sender, uint256 tokenId);
@@ -21,11 +25,27 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
   function makeNFT() public payable {
     uint256 newItemId = _tokenIds.current();
 
-    require(CURRENT_PRICE <= msg.value, "Value sent is not correct");
+    require(CURRENT_PRICE_1 <= msg.value, "Value sent is not correct");
     require(newItemId < MAX_TOKENS,"Max supply of NFT");
 
     _safeMint(msg.sender, newItemId);
     _tokenIds.increment();
+
+    emit NewNFTMinted(msg.sender, newItemId);
+  }
+
+  function makeNFT(bytes32 hash, bytes memory signature) public payable {
+    uint256 newItemId = _tokenIds.current();
+
+    require(CURRENT_PRICE_2 <= msg.value, "Value sent is not correct");
+    require(newItemId < MAX_TOKENS,"Max supply of NFT");
+    require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
+    require(!signatureUsed[signature], "Signature has already been used.");
+
+    _safeMint(msg.sender, newItemId);
+    _tokenIds.increment();
+
+    signatureUsed[signature] = true;
 
     emit NewNFTMinted(msg.sender, newItemId);
   }
@@ -41,6 +61,11 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
 
       emit NewNFTMinted(msg.sender, newItemId);
     }
+  }
+
+  function recoverSigner(bytes32 hash, bytes memory signature) public pure returns (address) {
+    bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    return ECDSA.recover(messageDigest, signature);
   }
 
   function totalSupply() view public returns (uint) {
@@ -59,8 +84,12 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
     BASE_URI = BaseURI;
   }
 
-  function setCurrentPrice(uint256 currentPrice) public onlyOwner {
-    CURRENT_PRICE = currentPrice;
+  function setCurrentPrice1(uint256 currentPrice) public onlyOwner {
+    CURRENT_PRICE_1 = currentPrice;
+  }
+
+  function setCurrentPrice2(uint256 currentPrice) public onlyOwner {
+    CURRENT_PRICE_2 = currentPrice;
   }
 
   function contractURI() public view returns (string memory) {
