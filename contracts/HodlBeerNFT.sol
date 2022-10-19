@@ -17,12 +17,12 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
   uint256 public CURRENT_PRICE_2 = 0.01 ether;
   string public BASE_URI = "https://hodlbeer.nft.baicom.com/api/card/";
 
-  event NewNFTMinted(address sender, uint256 tokenId);
+  event NewNFTMinted(address indexed sender, uint256 tokenId, string message);
 
   constructor() ERC721 ("HodlBeerClub", "HODLB") {
   }
 
-  function makeNFT() public payable {
+  function makeNFT(string memory _message) public payable {
     uint256 newItemId = _tokenIds.current();
 
     require(CURRENT_PRICE_1 <= msg.value, "Value sent is not correct");
@@ -31,7 +31,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
     _safeMint(msg.sender, newItemId);
     _tokenIds.increment();
 
-    emit NewNFTMinted(msg.sender, newItemId);
+    emit NewNFTMinted(msg.sender, newItemId, _message);
   }
 
   function makeNFT(bytes32 hash, bytes memory signature) public payable {
@@ -47,7 +47,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
 
     signatureUsed[signature] = true;
 
-    emit NewNFTMinted(msg.sender, newItemId);
+    emit NewNFTMinted(msg.sender, newItemId, 'signed');
   }
 
   function reserveNFT(uint count) public onlyOwner {
@@ -59,7 +59,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
       _safeMint(msg.sender, newItemId);
       _tokenIds.increment();
 
-      emit NewNFTMinted(msg.sender, newItemId);
+      emit NewNFTMinted(msg.sender, newItemId, 'reserve');
     }
   }
 
