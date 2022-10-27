@@ -95,10 +95,6 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
     CURRENT_PRICE_2 = currentPrice;
   }
 
-  function contractURI() public view returns (string memory) {
-    return BASE_URI;
-  }
-
   function setSigner(address _signer) public onlyOwner {
     SIGNER = _signer;
   }
