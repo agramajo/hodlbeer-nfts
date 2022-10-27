@@ -11,7 +11,9 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
   Counters.Counter private _tokenIds;
 
   mapping(bytes => bool) public signatureUsed;
+  address public SIGNER;
 
+  string public PROVENANCE = "";
   uint256 public MAX_TOKENS = 6000;
   uint256 public CURRENT_PRICE_1 = 0.02 ether;
   uint256 public CURRENT_PRICE_2 = 0.01 ether;
@@ -20,6 +22,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
   event NewNFTMinted(address indexed sender, uint256 tokenId, string message);
 
   constructor() ERC721 ("HodlBeerClub", "HODLB") {
+      SIGNER = owner();
   }
 
   function makeNFT(string memory _message) public payable {
@@ -34,12 +37,12 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
     emit NewNFTMinted(msg.sender, newItemId, _message);
   }
 
-  function makeNFT(bytes32 hash, bytes memory signature) public payable {
+  function signNFT(bytes32 hash, bytes memory signature) public payable {
     uint256 newItemId = _tokenIds.current();
 
     require(CURRENT_PRICE_2 <= msg.value, "Value sent is not correct");
     require(newItemId < MAX_TOKENS,"Max supply of NFT");
-    require(recoverSigner(hash, signature) == owner(), "Address is not allowlisted");
+    require(recoverSigner(hash, signature) == SIGNER, "Address not allow");
     require(!signatureUsed[signature], "Signature has already been used.");
 
     _safeMint(msg.sender, newItemId);
@@ -47,7 +50,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
 
     signatureUsed[signature] = true;
 
-    emit NewNFTMinted(msg.sender, newItemId, 'signed');
+    emit NewNFTMinted(msg.sender, newItemId, 'sign');
   }
 
   function reserveNFT(uint count) public onlyOwner {
@@ -94,5 +97,9 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
 
   function contractURI() public view returns (string memory) {
     return BASE_URI;
+  }
+
+  function setSigner(address _signer) public onlyOwner {
+    SIGNER = _signer;
   }
 }

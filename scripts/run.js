@@ -10,13 +10,13 @@ const main = async () => {
 
   // make a nft
   // Call the function.
-  let txn = await nftContract.makeNFT({value: ethers.utils.parseEther("20")})
+  let txn = await nftContract.makeNFT(11,{value: ethers.utils.parseEther("0.02")})
   // Wait for it to be mined.
   await txn.wait()
   console.log("Minted NFT #1")
 
   // make a nft
-  txn = await nftContract.makeNFT({value: ethers.utils.parseEther("20")})
+  txn = await nftContract.makeNFT('test',{value: ethers.utils.parseEther("0.02")})
   // Wait for it to be mined.
   await txn.wait()
   console.log("Minted NFT #2")
@@ -25,11 +25,16 @@ const main = async () => {
   txn = await nftContract.reserveNFT(150)
   // Wait for it to be mined.
   await txn.wait()
-  console.log("Minted reserve NFT")
+  console.log("Minted reserve 150 NFT")
 
-  // show CURRENT_PRICE
-  let price1 = await nftContract.CURRENT_PRICE()
-  console.log("price:", ethers.utils.formatEther(price1))
+  // show CURRENT_PRICE_1
+  let price1 = await nftContract.CURRENT_PRICE_1()
+  console.log("price1:", ethers.utils.formatEther(price1))
+
+  // set/show CURRENT_PRICE_2
+  tnx = await nftContract.setCurrentPrice2(0)
+  let price2 = await nftContract.CURRENT_PRICE_2()
+  console.log("price2:", ethers.utils.formatEther(price2))
 
   // change BASE_URI
   let nft1 = await nftContract.tokenURI(0)
@@ -42,6 +47,24 @@ const main = async () => {
 
   nft1 = await nftContract.tokenURI(0)
   console.log("new uri nft1:", nft1)
+
+  let message = '0x00'
+  let hash = ethers.utils.id(message)
+  console.log("hash", hash)
+
+  let bytes = ethers.utils.arrayify(hash)
+  let signature = await deployer.signMessage(bytes)
+  console.log("signature", signature)
+
+  let recover = await nftContract.recoverSigner(hash, signature)
+  console.log("signed by", recover.toString())
+
+  let signer = await nftContract.SIGNER()
+  console.log("signer", signer);
+
+  txn = await nftContract.signNFT(hash, signature, {value: 0});
+  await txn.wait()
+  console.log("Minted NFT #153 with sign")
 
   // show total
   let all = await nftContract.totalSupply()
