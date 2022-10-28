@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.16;
 
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract HodlBeerNFT is ERC721URIStorage, Ownable {
+contract HodlBeerNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
   using Counters for Counters.Counter;
   Counters.Counter private _tokenIds;
 
@@ -17,7 +18,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
   uint256 public MAX_TOKENS = 6000;
   uint256 public CURRENT_PRICE_1 = 0.02 ether;
   uint256 public CURRENT_PRICE_2 = 0.01 ether;
-  string public BASE_URI = "https://hodlbeer.nft.baicom.com/api/card/";
+  string public BASE_URI = "https://hodlbeer.club/api/";
 
   event NewNFTMinted(address indexed sender, uint256 tokenId, string message);
 
@@ -25,7 +26,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
       SIGNER = owner();
   }
 
-  function makeNFT(string memory _message) public payable {
+  function makeNFT(string memory _message) public payable nonReentrant {
     uint256 newItemId = _tokenIds.current();
 
     require(CURRENT_PRICE_1 <= msg.value, "Value sent is not correct");
@@ -37,7 +38,7 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
     emit NewNFTMinted(msg.sender, newItemId, _message);
   }
 
-  function signNFT(bytes32 hash, bytes memory signature) public payable {
+  function signNFT(bytes32 hash, bytes memory signature) public payable nonReentrant {
     uint256 newItemId = _tokenIds.current();
 
     require(CURRENT_PRICE_2 <= msg.value, "Value sent is not correct");
@@ -93,6 +94,10 @@ contract HodlBeerNFT is ERC721URIStorage, Ownable {
 
   function setCurrentPrice2(uint256 currentPrice) public onlyOwner {
     CURRENT_PRICE_2 = currentPrice;
+  }
+
+  function contractURI() public view returns (string memory) {
+    return BASE_URI;
   }
 
   function setSigner(address _signer) public onlyOwner {
